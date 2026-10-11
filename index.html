@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitación Digital Bento - Versión Refinada</title>
+    
+    <!-- FUENTES TIPOGRÁFICAS (Google Fonts) -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- LIBRERÍA DE ANIMACIÓN GSAP -->
+    <script src="https://cloudflare.com"></script>
+
+    <style>
+        /* --- ESTILOS BASE Y CONFIGURACIÓN --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #0b0c10;
+            color: #ffffff;
+            overflow: hidden; /* Bloquea el scroll mientras muestra la pantalla de carga */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CAMBIO 2: IMAGEN DE FONDO PRINCIPAL CON EFECTO PARALLAX --- */
+        .parallax-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+            /* NOTA: Reemplaza la URL de abajo por la foto de fondo que desees (paisaje, flores, etc.) */
+            background-image: url('https://unsplash.com');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Esto genera el efecto Parallax rígido y elegante */
+        }
+
+        /* Capa oscura translúcida sobre el fondo para asegurar que el texto sea legible */
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(11, 12, 16, 0.75); /* Controla la opacidad del fondo aquí */
+            z-index: 2;
+        }
+
+        /* --- PRELOADER (PANTALLA DE CARGA ESTILO AZURIO) --- */
+        .azurio-preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #12141c;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        /* Imágenes de fondo secundarias que rotan sutilmente en el cargador */
+        .loader-bg-images {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.12;
+            z-index: 1;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.8s ease-in-out;
+        }
+
+        .loader-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .preloader-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            color: #ffffff;
+            margin-bottom: 25px;
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Animación por letra controlada por GSAP */
+        .preloader-title span {
+            display: inline-block;
+            transform: translateY(110%);
+            opacity: 0;
+        }
+
+        .preloader-counter {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            color: #8a8f98;
+        }
+
+        .preloader-bar-container {
+            width: 180px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preloader-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: #ffffff;
+        }
+        /* --- CAMBIO 4: EL GRAN CONTENEDOR MADRE (ESTILO VIDRIO DEL DEMO) --- */
+        .glass-master-container {
+            position: relative;
+            z-index: 10;
+            width: 92%;
+            max-width: 1150px;
+            background: rgba(255, 255, 255, 0.03); /* Fondo blanco ultra-translúcido */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil brillante */
+            backdrop-filter: blur(20px); /* Efecto esmerilado que desenfoca la foto Parallax */
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 36px; /* Esquinas redondeadas del contenedor principal */
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            opacity: 0; /* Controlado por la animación de carga de GSAP */
+            transform: translateY(40px);
+            pointer-events: none; /* Bloqueado hasta que termine de cargar */
+        }
+
+        /* --- ARQUITECTURA INTERNA DEL BENTO GRID --- */
+        .bento-wrapper {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        /* Distribución en pantallas de computadoras o tablets grandes */
+        @media (min-width: 880px) {
+            .bento-wrapper {
+                grid-template-columns: 1.15fr 1fr;
+                min-height: 600px;
+            }
+            .bento-right-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 24px;
+            }
+            .item-countdown { grid-column: span 2; }
+            .item-rsvp { grid-column: span 2; }
+        }
+
+        /* --- DISEÑO DE LAS TARJETAS INTERNAS EN CADA BLOQUE --- */
+        .bento-card {
+            background: rgba(11, 12, 16, 0.65); /* Fondo oscuro para contrastar con el contenedor madre */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        
+        /* Efecto Hover dinámico al pasar el cursor */
+        .bento-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- DETALLES DE LA TARJETA DE IDENTIDAD (IZQUIERDA) --- */
+        .item-hero {
+            justify-content: flex-start;
+            gap: 20px;
+            min-height: 400px;
+        }
+        
+        /* CAMBIO 1: TÍTULO EDITORIAL AMARILLO SIN EL CONTENEDOR EN ÓVALO */
+        .event-badge {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: #d4af37; /* Color de realce dorado/amarillo elegante */
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .main-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.4rem;
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+        
+        .ampersand {
+            font-style: italic;
+            font-family: 'Cormorant Garamond', serif;
+            color: #d4af37;
+            font-size: 2.8rem;
+        }
+
+        /* CAMBIO 3: ESPACIO MAQUETADO PARA LA FOTOGRAFÍA DE LA PAREJA */
+        .partner-photo-container {
+            width: 100%;
+            height: 220px; /* Altura controlada para la foto dentro del Bento */
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+        .partner-photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajusta la imagen de forma armónica sin deformarla */
+        }
+        
+        .dedication {
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: #b3b8c2;
+            font-weight: 300;
+        }
+        /* --- DETALLES DE LA TARJETA DEL CONTADOR REGRESIVO --- */
+        .item-countdown {
+            text-align: center;
+            align-items: center;
+            padding: 25px;
+        }
+        .card-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8f98;
+            margin-bottom: 15px;
+        }
+        .countdown-display {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 10px;
+        }
+        .time-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .time-block span {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            font-weight: 400;
+            color: #ffffff;
+        }
+        .time-block label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8a8f98;
+            margin-top: 2px;
+        }
+        .event-date {
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: #d4af37;
+            margin-top: 5px;
+        }
+
+        /* --- DETALLES DE LAS TARJETAS DE LOGÍSTICA (UBICACIONES) --- */
+        .item-location {
+            align-items: center;
+            text-align: center;
+            padding: 30px 20px;
+            gap: 8px;
+        }
+        .location-icon { font-size: 1.6rem; margin-bottom: 2px; }
+        .location-title { font-size: 0.95rem; font-weight: 500; letter-spacing: 1px; }
+        .location-name { font-size: 0.85rem; color: #b3b8c2; font-weight: 300; line-height: 1.4; }
+        .location-time { font-size: 0.85rem; color: #d4af37; font-weight: 400; }
+        
+        .btn-map {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #ffffff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 2px;
+            transition: border-color 0.3s, color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-map:hover { border-color: #d4af37; color: #d4af37; }
+
+        /* --- DETALLES DE LA TARJETA DE CONFIRMACIÓN (RSVP) --- */
+        .item-rsvp {
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            gap: 15px;
+        }
+        .rsvp-text { font-size: 0.85rem; color: #b3b8c2; font-weight: 300; }
+        
+        .btn-whatsapp {
+            width: 100%;
+            max-width: 300px;
+            background: #ffffff;
+            color: #0b0c10;
+            text-decoration: none;
+            padding: 15px 0;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.08);
+            display: inline-block;
+        }
+        .btn-whatsapp:hover {
+            background: #d4af37;
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(212, 175, 55, 0.2);
+        }
+
+        /* --- RESPONSIVIDAD PARA CELULARES --- */
+        @media (max-width: 879px) {
+            body { overflow-y: auto; padding: 30px 0; }
+            .glass-master-container { width: 90%; padding: 25px 20px; border-radius: 28px; margin: 20px 0; }
+            .bento-wrapper { gap: 20px; }
+            .bento-right-group { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+            .main-title { font-size: 2.8rem; }
+            .partner-photo-container { height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. PANTALLA DE CARGA (PRELOADER ESTILO AZURIO) -->
+    <div class="azurio-preloader" id="preloader">
+        <div class="loader-bg-images" id="loader-bg-target"></div>
+        <div class="loader-content">
+            <div class="preloader-title" id="loader-text">
+                <span>D</span><span>a</span><span>n</span><span>i</span><span>e</span><span>l</span><span>a</span>
+                <span>&nbsp;&amp;&nbsp;</span>
+                <span>A</span><span>l</span><span>e</span><span>j</span><span>a</span><span>n</span><span>d</span><span>r</span><span>o</span>
+            </div>
+            <div class="preloader-counter"><span id="loader-percentage">0</span>%</div>
+            <div class="preloader-bar-container">
+                <div class="preloader-bar" id="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CAMBIO 2: IMAGEN DE FONDO FIJA (MANEJADA DESDE EL CSS DE LA PARTE 1) -->
+    <div class="parallax-background"></div>
+    <div class="background-overlay"></div>
+
+    <!-- 3. CAMBIO 4: EL GRAN CONTENEDOR MADRE CON EFECTO DE VIDRIO -->
+    <main class="glass-master-container" id="master-container">
+        
+        <!-- INICIO DEL BENTO GRID INTERNO -->
+        <div class="bento-wrapper">
+            
+            <!-- TARJETA IZQUIERDA: IDENTIDAD E IMAGEN -->
+            <div class="bento-card item-hero">
+                <div>
+                    <!-- CAMBIO 1: TÍTULO EN DORADO SIN ÓVALO -->
+                    <span class="event-badge">Nuestra Boda</span>
+                    <h1 class="main-title">Daniela<br><span class="ampersand">&amp;</span><br>Alejandro</h1>
+                </div>
+
+                <!-- CAMBIO 3: CONTENEDOR PARA LA FOTOGRAFÍA DE LA PAREJA -->
+                <div class="partner-photo-container">
+                    <!-- NOTA: Cambia la URL de abajo por la foto real de tus clientes -->
+                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1000" alt="Pareja">
+                </div>
+
+                <p class="dedication">"Hay momentos en la vida que son inolvidables, y compartirlos con quienes más amamos los hace eternos. Acompáñanos en este día tan especial."</p>
+            </div>
+
+            <!-- GRUPO MODULAR DERECHO -->
+            <div class="bento-right-group">
+                
+                <!-- TARJETA CONTADOR REGRESIVO -->
+                <div class="bento-card item-countdown">
+                    <h3 class="card-label">El gran día se acerca</h3>
+                    <div class="countdown-display">
+                        <div class="time-block"><span id="days">00</span><label>Días</label></div>
+                        <div class="time-block"><span id="hours">00</span><label>Hrs</label></div>
+                        <div class="time-block"><span id="minutes">00</span><label>Min</label></div>
+                    </div>
+                    <p class="event-date">Sábado, 24 de Octubre de 2026</p>
+                </div>
+
+                <!-- TARJETA UBICACIÓN: CEREMONIA -->
+                <div class="bento-card item-location">
+                    <div class="location-icon">⛪</div>
+                    <h3 class="location-title">Ceremonia Religiosa</h3>
+                    <p class="location-name">Parroquia de San Francisco de Asís</p>
+                    <p class="location-time">17:00 Hrs</p>
+                    <a href="https://google.com" target="_blank" class="btn-map">Ver Mapa</a>
+                </div>
+
+                <!-- TARJETA UBICACIÓN: RECEPCIÓN -->
+                <div class="bento-card item-location">
+                    <div class="location-icon">🥂</div>
+                    <h3 class="location-title">Recepción y Fiesta</h3>
+                    <p class="location-name">Jardín de Eventos Ambrosía</p>
+                    <p class="location-time">19:30 Hrs</p>
+                    <a href="https://google.com" target="_blank" class="btn-map">Ver Mapa</a>
+                </div>
+
+                <!-- TARJETA DE ACCIÓN: RSVP DE WHATSAPP -->
+                <div class="bento-card item-rsvp">
+                    <p class="rsvp-text">Agradecemos confirmar tu asistencia antes del 10 de Octubre.</p>
+                    <a href="https://wa.me" target="_blank" class="btn-whatsapp">
+                        Confirmar por WhatsApp
+                    </a>
+                </div>
+
+            </div> <!-- FIN GRUPO DERECHO -->
+        </div> <!-- FIN BENTO GRID INTERNO -->
+    </main>
+        /* --- DETALLES DE LA TARJETA DEL CONTADOR REGRESIVO --- */
+        .item-countdown {
+            text-align: center;
+            align-items: center;
+            padding: 25px;
+        }
+        .card-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8a8f98;
+            margin-bottom: 15px;
+        }
+        .countdown-display {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 10px;
+        }
+        .time-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .time-block span {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            font-weight: 400;
+            color: #ffffff;
+        }
+        .time-block label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8a8f98;
+            margin-top: 2px;
+        }
+        .event-date {
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: #d4af37;
+            margin-top: 5px;
+        }
+
+        /* --- DETALLES DE LAS TARJETAS DE LOGÍSTICA (UBICACIONES) --- */
+        .item-location {
+            align-items: center;
+            text-align: center;
+            padding: 30px 20px;
+            gap: 8px;
+        }
+        .location-icon { font-size: 1.6rem; margin-bottom: 2px; }
+        .location-title { font-size: 0.95rem; font-weight: 500; letter-spacing: 1px; }
+        .location-name { font-size: 0.85rem; color: #b3b8c2; font-weight: 300; line-height: 1.4; }
+        .location-time { font-size: 0.85rem; color: #d4af37; font-weight: 400; }
+        
+        .btn-map {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #ffffff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 2px;
+            transition: border-color 0.3s, color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-map:hover { border-color: #d4af37; color: #d4af37; }
+
+        /* --- DETALLES DE LA TARJETA DE CONFIRMACIÓN (RSVP) --- */
+        .item-rsvp {
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            gap: 15px;
+        }
+        .rsvp-text { font-size: 0.85rem; color: #b3b8c2; font-weight: 300; }
+        
+        .btn-whatsapp {
+            width: 100%;
+            max-width: 300px;
+            background: #ffffff;
+            color: #0b0c10;
+            text-decoration: none;
+            padding: 15px 0;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.08);
+            display: inline-block;
+        }
+        .btn-whatsapp:hover {
+            background: #d4af37;
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(212, 175, 55, 0.2);
+        }
+
+        /* --- RESPONSIVIDAD PARA CELULARES --- */
+        @media (max-width: 879px) {
+            body { overflow-y: auto; padding: 30px 0; }
+            .glass-master-container { width: 90%; padding: 25px 20px; border-radius: 28px; margin: 20px 0; }
+            .bento-wrapper { gap: 20px; }
+            .bento-right-group { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+            .main-title { font-size: 2.8rem; }
+            .partner-photo-container { height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. PANTALLA DE CARGA (PRELOADER ESTILO AZURIO) -->
+    <div class="azurio-preloader" id="preloader">
+        <div class="loader-bg-images" id="loader-bg-target"></div>
+        <div class="loader-content">
+            <div class="preloader-title" id="loader-text">
+                <span>D</span><span>a</span><span>n</span><span>i</span><span>e</span><span>l</span><span>a</span>
+                <span>&nbsp;&amp;&nbsp;</span>
+                <span>A</span><span>l</span><span>e</span><span>j</span><span>a</span><span>n</span><span>d</span><span>r</span><span>o</span>
+            </div>
+            <div class="preloader-counter"><span id="loader-percentage">0</span>%</div>
+            <div class="preloader-bar-container">
+                <div class="preloader-bar" id="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CAMBIO 2: IMAGEN DE FONDO FIJA (MANEJADA DESDE EL CSS DE LA PARTE 1) -->
+    <div class="parallax-background"></div>
+    <div class="background-overlay"></div>
+
+    <!-- 3. CAMBIO 4: EL GRAN CONTENEDOR MADRE CON EFECTO DE VIDRIO -->
+    <main class="glass-master-container" id="master-container">
+        
+        <!-- INICIO DEL BENTO GRID INTERNO -->
+        <div class="bento-wrapper">
+            
+            <!-- TARJETA IZQUIERDA: IDENTIDAD E IMAGEN -->
+            <div class="bento-card item-hero">
+                <div>
+                    <!-- CAMBIO 1: TÍTULO EN DORADO SIN ÓVALO -->
+                    <span class="event-badge">Nuestra Boda</span>
+                    <h1 class="main-title">Daniela<br><span class="ampersand">&amp;</span><br>Alejandro</h1>
+                </div>
+
+                <!-- CAMBIO 3: CONTENEDOR PARA LA FOTOGRAFÍA DE LA PAREJA -->
+                <div class="partner-photo-container">
+                    <!-- NOTA: Cambia la URL de abajo por la foto real de tus clientes -->
+                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1000" alt="Pareja">
+                </div>
+
+                <p class="dedication">"Hay momentos en la vida que son inolvidables, y compartirlos con quienes más amamos los hace eternos. Acompáñanos en este día tan especial."</p>
+            </div>
+
+            <!-- GRUPO MODULAR DERECHO -->
+            <div class="bento-right-group">
+                
+                <!-- TARJETA CONTADOR REGRESIVO -->
+                <div class="bento-card item-countdown">
+                    <h3 class="card-label">El gran día se acerca</h3>
+                    <div class="countdown-display">
+                        <div class="time-block"><span id="days">00</span><label>Días</label></div>
+                        <div class="time-block"><span id="hours">00</span><label>Hrs</label></div>
+                        <div class="time-block"><span id="minutes">00</span><label>Min</label></div>
+                    </div>
+                    <p class="event-date">Sábado, 24 de Octubre de 2026</p>
+                </div>
+
+                <!-- TARJETA UBICACIÓN: CEREMONIA -->
+                <div class="bento-card item-location">
+                    <div class="location-icon">⛪</div>
+                    <h3 class="location-title">Ceremonia Religiosa</h3>
+                    <p class="location-name">Parroquia de San Francisco de Asís</p>
+                    <p class="location-time">17:00 Hrs</p>
+                    <a href="https://google.com" target="_blank" class="btn-map">Ver Mapa</a>
+                </div>
+
+                <!-- TARJETA UBICACIÓN: RECEPCIÓN -->
+                <div class="bento-card item-location">
+                    <div class="location-icon">🥂</div>
+                    <h3 class="location-title">Recepción y Fiesta</h3>
+                    <p class="location-name">Jardín de Eventos Ambrosía</p>
+                    <p class="location-time">19:30 Hrs</p>
+                    <a href="https://google.com" target="_blank" class="btn-map">Ver Mapa</a>
+                </div>
+
+                <!-- TARJETA DE ACCIÓN: RSVP DE WHATSAPP -->
+                <div class="bento-card item-rsvp">
+                    <p class="rsvp-text">Agradecemos confirmar tu asistencia antes del 10 de Octubre.</p>
+                    <a href="https://wa.me" target="_blank" class="btn-whatsapp">
+                        Confirmar por WhatsApp
+                    </a>
+                </div>
+
+            </div> <!-- FIN GRUPO DERECHO -->
+        </div> <!-- FIN BENTO GRID INTERNO -->
+    </main>
+            <!-- 4. LÓGICA JAVASCRIPT DE ANIMACIÓN Y RELOJ REGRESIVO (VERSIÓN PURA DE PRODUCCIÓN PARA GITHUB) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // --- CAROUSEL DE IMÁGENES DE FONDO EN EL PRELOADER (ESTILO AZURIO) ---
+            // Estas imágenes rotan sutilmente en el fondo negro mientras sube el contador
+            const loaderImages = [
+                "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1000",
+                "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=800",
+                "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1000"
+            ];
+            
+            let bgTarget = document.getElementById("loader-bg-target");
+            let imgIndex = 0;
+            
+            if(loaderImages.length > 0 && bgTarget) {
+                bgTarget.style.backgroundImage = `url('${loaderImages[imgIndex]}')`;
+            }
+
+            let bgInterval = setInterval(() => {
+                imgIndex = (imgIndex + 1) % loaderImages.length;
+                if (bgTarget) {
+                    bgTarget.style.backgroundImage = `url('${loaderImages[imgIndex]}')`;
+                }
+            }, 1200);
+
+
+            // --- SIMULACIÓN DE CARGA MATEMÁTICA ---
+            let percentageElement = document.getElementById("loader-percentage");
+            let progressElement = document.getElementById("loader-progress");
+            let currentPercent = 0;
+
+            let loadingInterval = setInterval(() => {
+                // Incrementos orgánicos rápidos
+                currentPercent += Math.floor(Math.random() * 9) + 3; 
+                
+                if (currentPercent >= 100) {
+                    currentPercent = 100;
+                    clearInterval(loadingInterval);
+                    clearInterval(bgInterval);
+                    initExitAnimation(); // Detona la transición al completarse
+                }
+                percentageElement.innerText = currentPercent;
+                progressElement.style.width = currentPercent + "%";
+            }, 70);
+
+
+            // --- ANIMACIÓN DE APARICIÓN DE LETRAS CON GSAP ---
+            // Levanta cada letra individualmente creando el efecto de revelado asimétrico
+            gsap.to(".preloader-title span", {
+                translateY: "0%",
+                opacity: 1,
+                duration: 1.1,
+                stagger: 0.04,
+                ease: "power3.out"
+            });
+
+
+            // --- TRANSICIÓN DE SALIDA DE LA CORTINA Y APERTURA EN VIDRIO ---
+            function initExitAnimation() {
+                let timeline = gsap.timeline();
+
+                // 1. Desvanece los textos centrales del cargador
+                timeline.to(".loader-content", {
+                    opacity: 0,
+                    y: -30,
+                    duration: 0.6,
+                    ease: "power2.in"
+                });
+
+                // 2. Levanta el panel oscuro del preloader verticalmente hacia arriba
+                timeline.to("#preloader", {
+                    yPercent: -100,
+                    duration: 0.9,
+                    ease: "power4.inOut"
+                }, "-=0.2");
+
+                // 3. Libera el scroll del cuerpo y activa clics en el bento
+                timeline.set("body", { overflowY: "auto" });
+                timeline.set("#master-container", { pointerEvents: "all" });
+
+                // 4. Revela el gran contenedor esmerilado flotando suavemente desde abajo
+                timeline.to("#master-container", {
+                    opacity: 1,
+                    y: 0,
+                    duration: 1.3,
+                    ease: "power4.out"
+                }, "-=0.4");
+            }
+
+
+            // --- SISTEMA DEL RELOJ REGRESIVO EN TIEMPO REAL ---
+            // Configuración de la fecha meta: Año, Mes (Octubre = 9 en JS), Día, Hora, Minutos
+            const targetDate = new Date(2026, 9, 24, 17, 0, 0).getTime();
+
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const difference = targetDate - now;
+
+                if (difference < 0) {
+                    document.getElementById("days").innerText = "00";
+                    document.getElementById("hours").innerText = "00";
+                    document.getElementById("minutes").innerText = "00";
+                    return;
+                }
+
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+
+                // Formateador de dos dígitos fijos
+                document.getElementById("days").innerText = days < 10 ? "0" + days : days;
+                document.getElementById("hours").innerText = hours < 10 ? "0" + hours : hours;
+                document.getElementById("minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 30000); // Actualización inteligente cada 30 segundos
+        });
+    </script>
+
+</body>
+</html>
