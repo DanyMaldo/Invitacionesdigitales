@@ -655,12 +655,11 @@
             </div> <!-- FIN GRUPO DERECHO -->
         </div> <!-- FIN BENTO GRID INTERNO -->
     </main>
-            <!-- 4. LÓGICA JAVASCRIPT DE ANIMACIÓN Y RELOJ REGRESIVO (VERSIÓN PURA DE PRODUCCIÓN PARA GITHUB) -->
+                <!-- 4. LÓGICA JAVASCRIPT DE ANIMACIÓN Y PROGRESO (VERSIÓN CORREGIDA PARA PRODUCIR) -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             
-            // --- CAROUSEL DE IMÁGENES DE FONDO EN EL PRELOADER (ESTILO AZURIO) ---
-            // Estas imágenes rotan sutilmente en el fondo negro mientras sube el contador
+            // --- CAROUSEL DE IMÁGENES DE FONDO EN EL PRELOADER ---
             const loaderImages = [
                 "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1000",
                 "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=800",
@@ -681,73 +680,72 @@
                 }
             }, 1200);
 
+            // --- ANIMACIÓN NATIVA DE LAS LETRAS (REVELADO ESCALONADO) ---
+            // Forzamos la aparición segura de cada letra de forma secuencial
+            const letras = document.querySelectorAll(".preloader-title span");
+            letras.forEach((letra, index) => {
+                setTimeout(() => {
+                    letra.style.opacity = "1";
+                    letra.style.transform = "translateY(0%)";
+                    letra.style.transition = "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s ease";
+                }, index * 40); // Genera el retraso de máquina de escribir elegante
+            });
 
-            // --- SIMULACIÓN DE CARGA MATEMÁTICA ---
+            // --- SIMULACIÓN DE CARGA MATEMÁTICA EN LÍNEA ---
             let percentageElement = document.getElementById("loader-percentage");
             let progressElement = document.getElementById("loader-progress");
             let currentPercent = 0;
 
             let loadingInterval = setInterval(() => {
-                // Incrementos orgánicos rápidos
-                currentPercent += Math.floor(Math.random() * 9) + 3; 
+                // Incrementos fluidos
+                currentPercent += Math.floor(Math.random() * 7) + 3; 
                 
                 if (currentPercent >= 100) {
                     currentPercent = 100;
                     clearInterval(loadingInterval);
                     clearInterval(bgInterval);
-                    initExitAnimation(); // Detona la transición al completarse
+                    initExitAnimation(); // Abre la cortina
                 }
-                percentageElement.innerText = currentPercent;
-                progressElement.style.width = currentPercent + "%";
-            }, 70);
+                
+                if(percentageElement && progressElement) {
+                    percentageElement.innerText = currentPercent;
+                    progressElement.style.width = currentPercent + "%";
+                }
+            }, 60);
 
-
-            // --- ANIMACIÓN DE APARICIÓN DE LETRAS CON GSAP ---
-            // Levanta cada letra individualmente creando el efecto de revelado asimétrico
-            gsap.to(".preloader-title span", {
-                translateY: "0%",
-                opacity: 1,
-                duration: 1.1,
-                stagger: 0.04,
-                ease: "power3.out"
-            });
-
-
-            // --- TRANSICIÓN DE SALIDA DE LA CORTINA Y APERTURA EN VIDRIO ---
+            // --- TRANSICIÓN DE SALIDA NATIVA (EFECTO CORTINA AZURIO) ---
             function initExitAnimation() {
-                let timeline = gsap.timeline();
+                const preloader = document.getElementById("preloader");
+                const masterContainer = document.getElementById("master-container");
+                const loaderContent = document.querySelector(".loader-content");
 
-                // 1. Desvanece los textos centrales del cargador
-                timeline.to(".loader-content", {
-                    opacity: 0,
-                    y: -30,
-                    duration: 0.6,
-                    ease: "power2.in"
-                });
+                // 1. Desvanecemos el contador y barra
+                if(loaderContent) {
+                    loaderContent.style.opacity = "0";
+                    loaderContent.style.transform = "translateY(-20px)";
+                    loaderContent.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+                }
 
-                // 2. Levanta el panel oscuro del preloader verticalmente hacia arriba
-                timeline.to("#preloader", {
-                    yPercent: -100,
-                    duration: 0.9,
-                    ease: "power4.inOut"
-                }, "-=0.2");
-
-                // 3. Libera el scroll del cuerpo y activa clics en el bento
-                timeline.set("body", { overflowY: "auto" });
-                timeline.set("#master-container", { pointerEvents: "all" });
-
-                // 4. Revela el gran contenedor esmerilado flotando suavemente desde abajo
-                timeline.to("#master-container", {
-                    opacity: 1,
-                    y: 0,
-                    duration: 1.3,
-                    ease: "power4.out"
-                }, "-=0.4");
+                setTimeout(() => {
+                    // 2. Elevamos la cortina del preloader hacia arriba
+                    if(preloader) {
+                        preloader.style.transform = "translateY(-100%)";
+                        preloader.style.transition = "transform 0.85s cubic-bezier(0.85, 0, 0.15, 1)";
+                    }
+                    
+                    // 3. Activamos el bento grid de fondo
+                    document.body.style.overflowY = "auto";
+                    
+                    if(masterContainer) {
+                        masterContainer.style.pointerEvents = "all";
+                        masterContainer.style.opacity = "1";
+                        masterContainer.style.transform = "translateY(0px)";
+                        masterContainer.style.transition = "opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)";
+                    }
+                }, 350);
             }
 
-
-            // --- SISTEMA DEL RELOJ REGRESIVO EN TIEMPO REAL ---
-            // Configuración de la fecha meta: Año, Mes (Octubre = 9 en JS), Día, Hora, Minutos
+            // --- SISTEMA DEL RELOJ REGRESIVO ---
             const targetDate = new Date(2026, 9, 24, 17, 0, 0).getTime();
 
             function updateCountdown() {
@@ -765,16 +763,12 @@
                 const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
 
-                // Formateador de dos dígitos fijos
                 document.getElementById("days").innerText = days < 10 ? "0" + days : days;
                 document.getElementById("hours").innerText = hours < 10 ? "0" + hours : hours;
                 document.getElementById("minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
             }
 
             updateCountdown();
-            setInterval(updateCountdown, 30000); // Actualización inteligente cada 30 segundos
+            setInterval(updateCountdown, 30000);
         });
     </script>
-
-</body>
-</html>
